@@ -1,0 +1,1271 @@
+================================================================================
+                    EXPLICACIÓN DETALLADA DEL PROYECTO
+                         SISTEMA DE PARQUEADERO
+                              ParkControl
+================================================================================
+
+TABLA DE CONTENIDOS:
+1. Introducción General
+2. Descripción del Proyecto
+3. Stack Tecnológico
+4. Estructura del Proyecto
+5. Componentes Principales
+6. Flujo de Datos
+7. Autenticación y Sesiones
+8. Base de Datos
+9. Rutas API
+10. Interfaz de Usuario
+11. Flujos Principales
+12. Configuración
+13. Instalación y Ejecución
+
+================================================================================
+1. INTRODUCCIÓN GENERAL
+================================================================================
+
+ParkControl es un SISTEMA WEB completo para la gestión y control de un 
+parqueadero (estacionamiento). Este proyecto demuestra conceptos avanzados 
+de desarrollo web moderno incluyendo:
+
+- Autenticación de usuarios
+- Gestión de base de datos
+- APIs REST
+- Interfaces reactivas
+- Control de roles y permisos
+- Cálculo de tarifas dinámicas
+- Reportes y estadísticas
+
+El proyecto está completamente escrito en TypeScript, lo que proporciona
+SEGURIDAD DE TIPOS en toda la aplicación, reduciendo errores en tiempo
+de ejecución.
+
+
+================================================================================
+2. DESCRIPCIÓN DEL PROYECTO
+================================================================================
+
+OBJETIVO PRINCIPAL:
+Crear una aplicación para controlar las ENTRADAS y SALIDAS de vehículos
+en un parqueadero, calcular tarifas automáticamente, generar reportes
+financieros y gestionar usuarios y espacios.
+
+CARACTERÍSTICAS PRINCIPALES:
+
+┌─ PARA OPERARIOS (Rol: Operario)
+│  ├─ Registrar entrada de vehículos
+│  ├─ Registrar salida de vehículos
+│  ├─ Ver disponibilidad de espacios
+│  ├─ Consultar panel de control
+│  └─ Generar tickets de entrada
+
+├─ PARA ADMINISTRADORES (Rol: Administrador)
+│  ├─ Hacer todo lo que hace un operario
+│  ├─ Configurar y gestionar tarifas
+│  ├─ Crear y gestionar usuarios
+│  ├─ Ver reportes detallados
+│  └─ Analizar estadísticas de ingresos
+
+└─ SISTEMA
+   ├─ Cálculo automático de tarifas
+   ├─ Asignación automática de espacios
+   ├─ Control de disponibilidad
+   ├─ Generación de tickets
+   └─ Auditoría de registros
+
+
+================================================================================
+3. STACK TECNOLÓGICO
+================================================================================
+
+FRONTEND:
+├─ Next.js 16.1.6
+│  └─ Framework React con Server-Side Rendering (SSR)
+├─ React 19
+│  └─ Librería de UI con componentes reactivos
+├─ TypeScript 5.7.3
+│  └─ Lenguaje tipado para JavaScript
+├─ Tailwind CSS 3.4.17
+│  └─ Framework de CSS Utility-First
+├─ UI Components: 
+│  ├─ Radix UI (componentes sin estilo)
+│  ├─ Shadcn (componentes pre-diseñados)
+│  └─ Lucide React (iconografía)
+└─ Utilidades:
+   ├─ React Hook Form (gestión de formularios)
+   ├─ Zod (validación de esquemas)
+   ├─ Sonner (notificaciones tipo toast)
+   ├─ Recharts (gráficos)
+   └─ SWR (fetching de datos)
+
+BACKEND:
+├─ Next.js API Routes
+│  └─ Rutas serverless para manejar lógica
+├─ Node.js
+│  └─ Runtime de JavaScript
+└─ TypeScript (también en backend)
+
+BASE DE DATOS:
+├─ Neon Database
+│  └─ PostgreSQL remotamente alojado
+├─ Neon SDK (@neondatabase/serverless)
+│  └─ Cliente para conectar a Neon
+└─ SQL
+   └─ Lenguaje para consultas de base de datos
+
+HERRAMIENTAS DE DESARROLLO:
+├─ pnpm (gestor de paquetes)
+├─ ESLint (análisis de código)
+├─ PostCSS (procesamiento de CSS)
+└─ Autoprefixer (compatibilidad de CSS)
+
+
+================================================================================
+4. ESTRUCTURA DEL PROYECTO
+================================================================================
+
+parqueadero/                          ← RAÍZ DEL PROYECTO
+├── app/                              ← DIRECTORIO PRINCIPAL DE NEXT.JS
+│   ├── globals.css                   ← Estilos globales
+│   ├── layout.tsx                    ← Layout raíz (HTML, metadata)
+│   ├── page.tsx                      ← Página de inicio (redirige a login/dashboard)
+│   │
+│   ├── api/                          ← RUTAS API (Backend)
+│   │   ├── auth/                     ← Autenticación
+│   │   │   ├── login/route.ts        ← POST: Iniciar sesión
+│   │   │   ├── logout/route.ts       ← POST: Cerrar sesión
+│   │   │   ├── register/route.ts     ← POST: Registrar usuario
+│   │   │   └── session/route.ts      ← GET: Obtener sesión actual
+│   │   ├── espacios/route.ts         ← GET: Listar espacios
+│   │   ├── registros/                ← Gestión de registros
+│   │   │   ├── route.ts              ← GET: Listar registros
+│   │   │   ├── entrada/route.ts      ← POST: Registrar entrada
+│   │   │   └── salida/route.ts       ← POST: Registrar salida
+│   │   ├── reportes/route.ts         ← GET: Obtener reportes
+│   │   ├── tarifas/route.ts          ← GET/POST: Gestionar tarifas
+│   │   ├── tipos-vehiculo/route.ts   ← GET: Tipos de vehículos
+│   │   └── usuarios/route.ts         ← GET/POST: Gestionar usuarios
+│   │
+│   ├── login/                        ← PÁGINAS PÚBLICAS
+│   │   └── page.tsx                  ← Página de inicio de sesión
+│   │
+│   └── dashboard/                    ← PÁGINAS PROTEGIDAS (Sistema Principal)
+│       ├── layout.tsx                ← Layout del dashboard
+│       ├── page.tsx                  ← Panel de control principal
+│       ├── entrada/page.tsx          ← Registrar entrada de vehículos
+│       ├── salida/page.tsx           ← Registrar salida de vehículos
+│       ├── espacios/page.tsx         ← Visualizar espacios disponibles
+│       ├── reportes/page.tsx         ← Ver reportes y estadísticas
+│       ├── tarifas/page.tsx          ← Configurar tarifas
+│       └── usuarios/page.tsx         ← Gestionar usuarios
+│
+├── components/                       ← COMPONENTES REUTILIZABLES
+│   ├── app-sidebar.tsx               ← Barra lateral de navegación
+│   ├── dashboard-content.tsx         ← Contenido del panel principal
+│   ├── theme-provider.tsx            ← Proveedor de tema (dark/light)
+│   └── ui/                           ← COMPONENTES DE INTERFAZ (Shadcn)
+│       ├── button.tsx                ├─ Botonera
+│       ├── card.tsx                  ├─ Tarjetas
+│       ├── input.tsx                 ├─ Campos de entrada
+│       ├── form.tsx                  ├─ Formularios
+│       ├── table.tsx                 ├─ Tablas
+│       ├── dialog.tsx                ├─ Diálogos modales
+│       ├── dropdown-menu.tsx         ├─ Menús desplegables
+│       ├── tabs.tsx                  ├─ Pestañas
+│       ├── chart.tsx                 ├─ Gráficos
+│       ├── badge.tsx                 ├─ Etiquetas
+│       ├── toast.tsx                 ├─ Notificaciones
+│       ├── select.tsx                ├─ Selectores
+│       ├── checkbox.tsx              ├─ Casillas de verificación
+│       ├── radio-group.tsx           ├─ Botones de radio
+│       ├── accordion.tsx             ├─ Acordeones
+│       ├── avatar.tsx                ├─ Avatares de usuario
+│       └── ... (más componentes)     └─ ... (más componentes)
+│
+├── hooks/                            ← HOOKS PERSONALIZADOS
+│   ├── use-mobile.tsx                ← Detectar dispositivo móvil
+│   └── use-toast.ts                  ← Notificaciones tipo toast
+│
+├── lib/                              ← UTILIDADES Y SERVICIOS
+│   ├── auth.ts                       ← Lógica de autenticación
+│   ├── db.ts                         ← Conexión a base de datos
+│   └── utils.ts                      ← Funciones auxiliares
+│
+├── public/                           ← ARCHIVOS ESTÁTICOS
+│
+├── scripts/                          ← SCRIPTS DE UTILIDAD
+│   ├── migration.sql                 ← Script de crear tablas (inicial)
+│   ├── seed-users.sql                ← Script de datos iniciales
+│   ├── run-migration.js              ← Ejecutar migraciones
+│   └── run-seed.js                   ← Ejecutar seeds
+│
+├── styles/                           ← ESTILOS
+│   └── globals.css                   ← Estilos globales (con Tailwind)
+│
+├── package.json                      ← Dependencias del proyecto
+├── tsconfig.json                     ← Configuración de TypeScript
+├── next.config.mjs                   ← Configuración de Next.js
+├── tailwind.config.ts                ← Configuración de Tailwind CSS
+├── postcss.config.mjs                ← Configuración de PostCSS
+├── components.json                   ← Configuración de Shadcn
+├── pnpm-lock.yaml                    ← Lock file de dependencias
+└── .env.local                        ← Variables de entorno (local)
+
+
+================================================================================
+5. COMPONENTES PRINCIPALES EXPLICADOS
+================================================================================
+
+A. ESTRUCTURA DE CARPETAS (app/ vs components/ vs lib/)
+────────────────────────────────────────────────────────
+
+   app/
+   └─ Contiene toda la lógica de RUTAS y PÁGINAS
+   └─ Cada carpeta es una ruta en la URL
+   └─ Los archivos page.tsx son los que se renderizado
+   └─ Los archivos layout.tsx envuelven otras páginas
+   └─ Los archivos route.ts son endpoints API
+
+   components/
+   └─ Contiene COMPONENTES REUTILIZABLES
+   └─ Se importan y usan en múltiples páginas
+   └─ Ejemplos: botones, tarjetas, formularios
+
+   lib/
+   └─ Contiene FUNCIONES AUXILIARES y SERVICIOS
+   └─ Código sin interfaz visual (lógica pura)
+   └─ Ejemplos: conexión a BD, autenticación
+
+
+B. COMPONENTES DE INTERFAZ (Shadcn UI)
+────────────────────────────────────────
+
+Shadcn es una colección de componentes bonitos basados en Radix UI.
+Se importan así en un componente:
+
+   import { Button } from "@/components/ui/button"
+   import { Card } from "@/components/ui/card"
+   import { Input } from "@/components/ui/input"
+
+Ejemplo de uso:
+   <Button onClick={handleClick}>Clickeame</Button>
+   <Card>
+     <Input placeholder="Ingresa tu nombre" />
+   </Card>
+
+
+C. OTROS COMPONENTES CLAVE
+──────────────────────────
+
+1. AppSidebar (app-sidebar.tsx)
+   - Barra lateral izquierda
+   - Navegación principal
+   - Muestra menú según el rol del usuario
+   - Para Operarios: Panel, Entrada, Salida, Espacios
+   - Para Administradores: + Tarifas, Usuarios, Reportes
+   - Botón de Logout
+
+2. DashboardContent (dashboard-content.tsx)
+   - Contenido principal del panel
+   - Muestra estadísticas en tarjetas
+   - Últimos registros
+   - Resumen de espacios
+   - Gráficos con Recharts
+
+3. ThemeProvider (theme-provider.tsx)
+   - Proveedor de tema (claro/oscuro)
+   - Usa next-themes
+   - Envuelve la aplicación
+
+
+================================================================================
+6. FLUJO DE DATOS
+================================================================================
+
+ARQUITECTURA GENERAL:
+────────────────────
+
+┌─────────────────────────────────────────────────────────────┐
+│                    NAVEGADOR (Cliente)                       │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │         Página React / Componentes                  │   │
+│  │ (Dashboard, Entrada, Salida, Tarifas, etc)         │   │
+│  └──────────────┬──────────────────────────────────────┘   │
+│                 │ fetch("/api/...")                         │
+│                 │ (JSON HTTP Request)                       │
+└─────────────────┼──────────────────────────────────────────┘
+                  │
+                  ├─────► API Route (/api/...)
+                  │       ├─ Valida datos
+                  │       ├─ Verifica sesión
+                  │       ├─ Consulta Base de Datos
+                  │       └─ Retorna JSON
+                  │
+┌─────────────────┼──────────────────────────────────────────┐
+│                 ▼                                            │
+│         ┌──────────────────┐                                │
+│         │ NEON DATABASE    │                                │
+│         │  (PostgreSQL)    │                                │
+│         │                  │                                │
+│         │ - Usuarios       │                                │
+│         │ - Espacios       │                                │
+│         │ - Registros      │                                │
+│         │ - Tarifas        │                                │
+│         │ - Tipos Vehículos│                                │
+│         │ - Tickets        │                                │
+│         └──────────────────┘                                │
+│                                                              │
+│              (Internet - Neon Remote)                       │
+└──────────────────────────────────────────────────────────────┘
+
+
+EJEMPLO DE FLUJO: Registrar Entrada de Vehículo
+────────────────────────────────────────────────
+
+1. USUARIO en el navegador
+   └─ Va a /dashboard/entrada (página de registro)
+
+2. PÁGINA REACT (frontend)
+   └─ Muestra formulario con:
+      ├─ Campo para placa (ej: ABC-123)
+      ├─ Selector de tipo de vehículo
+      └─ Botón "Registrar Entrada"
+
+3. USUARIO completa formulario y presiona botón
+
+4. JAVASCRIPT ejecuta:
+   └─ fetch("/api/registros/entrada", {
+        method: "POST",
+        body: JSON.stringify({
+          placa: "ABC-123",
+          tipo_vehiculo_id: 1
+        })
+      })
+
+5. BACKEND (API Route) recibe la petición
+   └─ Obtiene datos del body
+   └─ Verifica sesión del usuario
+   └─ Busca tipo de vehículo en BD
+   └─ Encuentra categoría (AUTO o MOTO)
+   └─ Busca espacio disponible de esa categoría
+   └─ Crea registro en tabla "registros"
+   └─ Marca espacio como ocupado
+   └─ Genera código de ticket
+   └─ Retorna JSON con respuesta
+
+6. FRONTEND recibe respuesta
+   └─ Si éxito: Muestra mensaje de confirmación
+   └─ Si error: Muestra mensaje de error
+   └─ Actualiza pantalla
+
+
+================================================================================
+7. AUTENTICACIÓN Y SESIONES
+================================================================================
+
+¿CÓMO FUNCIONA LA AUTENTICACIÓN?
+────────────────────────────────
+
+PASO 1: LOGIN
+─────
+
+Usuario va a /login
+Ingresa: email y contraseña
+Presiona: Iniciar Sesión
+
+→ JavaScript hace fetch a /api/auth/login (POST)
+  {
+    "email": "operario@example.com",
+    "password": "password123"
+  }
+
+→ Backend (route.ts):
+  ├─ Recibe email y contraseña
+  ├─ Busca usuario en BD por email
+  ├─ Verifica si usuario existe y está activo
+  ├─ Compara contraseña (debería usar bcrypt en producción)
+  ├─ Si es válido:
+  │  ├─ Crea cookie de sesión
+  │  ├─ Codifica userId en Base64
+  │  └─ Retorna JSON con datos del usuario
+  └─ Si es inválido:
+     └─ Retorna error 401
+
+PASO 2: COOKIE DE SESIÓN
+────────────────────────
+
+La cookie se crea con:
+- name: "session"
+- value: base64(JSON con userId)
+- httpOnly: true (no accesible desde JavaScript)
+- sameSite: "lax"
+- maxAge: 86400 (24 horas)
+- path: "/" (toda la aplicación)
+
+La cookie se envía automáticamente en CADA petición
+
+
+PASO 3: VERIFICACIÓN DE SESIÓN
+──────────────────────────────
+
+En cada página protegida (dashboard/*):
+
+1. Se ejecuta getSession() (en lib/auth.ts)
+2. Obtiene la cookie "session"
+3. Decodifica el userId desde Base64
+4. Consulta la BD para obtener datos del usuario
+5. Si existe y está activo: retorna datos del usuario
+6. Si no existe: retorna null
+
+6. Si getSession() retorna null:
+   ├─ next/navigation.redirect() envía al usuario a /login
+   └─ Impide acceso a página protegida
+
+
+PASO 4: LOGOUT
+───────────
+
+Usuario presiona botón Logout
+→ JavaScript hace fetch a /api/auth/logout (POST)
+→ Backend elimina la cookie
+→ Frontend redirige a /login
+
+
+CÓDIGO CLAVE (lib/auth.ts):
+──────────────────────────
+
+export async function getSession() {
+  const cookieStore = await cookies()          // Obtiene cookies
+  const sessionCookie = cookieStore.get("session")
+  if (!sessionCookie) return null
+
+  try {
+    const data = JSON.parse(                    // Decodifica
+      atob(sessionCookie.value)
+    )
+    
+    const rows = await sql`                     // Consulta BD
+      SELECT u.id, u.nombre, u.email, u.activo, r.nombre as rol
+      FROM usuarios u
+      JOIN roles r ON r.id = u.rol_id
+      WHERE u.id = ${data.userId} AND u.activo = true
+    `
+    
+    if (rows.length === 0) return null
+    return rows[0]                              // Retorna usuario
+  } catch {
+    return null
+  }
+}
+
+
+================================================================================
+8. BASE DE DATOS - TABLAS Y RELACIONES
+================================================================================
+
+La base de datos tiene 7 tablas principales:
+
+TABLA 1: ROLES
+──────────────
+┌──────────────────────────────────────┐
+│ roles                                │
+├──────────────────────────────────────┤
+│ id (INTEGER, PRIMARY KEY)            │ ← Identificador único
+│ nombre (VARCHAR, UNIQUE)             │ ← Nombre: "Administrador", "Operario"
+│ descripcion (VARCHAR)                │ ← Descripción del rol
+└──────────────────────────────────────┘
+
+Datos iniciales:
+- ID 1: Administrador
+- ID 2: Operario
+
+
+TABLA 2: USUARIOS
+──────────────────
+┌──────────────────────────────────────┐
+│ usuarios                             │
+├──────────────────────────────────────┤
+│ id (INTEGER, PRIMARY KEY)            │
+│ nombre (VARCHAR)                     │
+│ email (VARCHAR, UNIQUE)              │
+│ password_hash (VARCHAR)              │ ← Hash de la contraseña
+│ rol_id (INTEGER, FK → roles)         │ ← Referencia al rol
+│ activo (BOOLEAN)                     │ ← Activo o inactivo
+│ fecha_creacion (TIMESTAMP)           │
+└──────────────────────────────────────┘
+
+
+TABLA 3: TIPOS_VEHICULO
+────────────────────────
+┌──────────────────────────────────────┐
+│ tipos_vehiculo                       │
+├──────────────────────────────────────┤
+│ id (INTEGER, PRIMARY KEY)            │
+│ nombre (VARCHAR, UNIQUE)             │ ← "Sedan", "Camioneta", "Moto"
+│ descripcion (VARCHAR)                │
+│ categoria (VARCHAR)                  │ ← "AUTO" o "MOTO"
+└──────────────────────────────────────┘
+
+
+TABLA 4: ESPACIOS
+──────────────────
+┌──────────────────────────────────────┐
+│ espacios                             │
+├──────────────────────────────────────┤
+│ id (INTEGER, PRIMARY KEY)            │
+│ codigo (VARCHAR, UNIQUE)             │ ← "A-01", "A-02", "M-01", etc
+│ tipo_vehiculo_id (INTEGER, FK)       │
+│ categoria (VARCHAR)                  │ ← "AUTO" o "MOTO"
+│ disponible (BOOLEAN)                 │ ← true si está libre
+└──────────────────────────────────────┘
+
+Datos iniciales:
+- 30 espacios para autos (A-01 a A-30)
+- 15 espacios para motos (M-01 a M-15)
+
+
+TABLA 5: TARIFAS
+─────────────────
+┌──────────────────────────────────────┐
+│ tarifas                              │
+├──────────────────────────────────────┤
+│ id (INTEGER, PRIMARY KEY)            │
+│ tipo_vehiculo_id (INTEGER, FK)       │
+│ nombre (VARCHAR)                     │
+│ tipo_cobro (VARCHAR)                 │ ← "POR_HORA", "POR_DIA", etc
+│ valor (DECIMAL)                      │ ← Precio en moneda local
+│ activo (BOOLEAN)                     │
+│ fecha_inicio (DATE)                  │
+│ fecha_fin (DATE)                     │
+└──────────────────────────────────────┘
+
+Tarifas iniciales:
+- Sedan: $5000 por hora
+- Camioneta: $7000 por hora
+- Moto: $3000 por hora
+
+
+TABLA 6: REGISTROS
+────────────────────
+┌──────────────────────────────────────┐
+│ registros                            │
+├──────────────────────────────────────┤
+│ id (INTEGER, PRIMARY KEY)            │
+│ placa (VARCHAR)                      │ ← Placa del vehículo
+│ tipo_vehiculo_id (INTEGER, FK)       │
+│ espacio_id (INTEGER, FK)             │
+│ fecha_hora_entrada (TIMESTAMP)       │
+│ fecha_hora_salida (TIMESTAMP)        │ ← NULL mientras esté dentro
+│ minutos_totales (INTEGER)            │ ← Se calcula al salir
+│ tarifa_id (INTEGER, FK)              │
+│ valor_calculado (DECIMAL)            │
+│ descuento (DECIMAL)                  │
+│ valor_final (DECIMAL)                │
+│ estado (VARCHAR)                     │ ← "EN_CURSO" o "FINALIZADO"
+│ usuario_entrada_id (INTEGER, FK)     │ ← Quién registró entrada
+│ usuario_salida_id (INTEGER, FK)      │ ← Quién registró salida
+└──────────────────────────────────────┘
+
+
+TABLA 7: TICKETS
+──────────────────
+┌──────────────────────────────────────┐
+│ tickets                              │
+├──────────────────────────────────────┤
+│ id (INTEGER, PRIMARY KEY)            │
+│ registro_id (INTEGER, FK)            │
+│ codigo_ticket (VARCHAR, UNIQUE)      │ ← "TK-ABC123DEF"
+│ email_cliente (VARCHAR)              │
+│ enviado_email (BOOLEAN)              │
+│ fecha_emision (TIMESTAMP)            │
+└──────────────────────────────────────┘
+
+
+RELACIONES (Diagrama de Claves Externas)
+──────────────────────────────────────────
+
+        roles
+         ▲ │
+         │ │ rol_id
+         │ └──────┐
+         │        │
+      usuarios    tipos_vehiculo
+         │        ▲ ▲ ▲
+         │        │ │ │
+    usuario_    tipo_vh_id │
+    entrada_id  │         │
+              registros   espacios
+              ▲           │
+              │           │
+           registro_id   espacio_id
+           │
+       tickets
+
+Explicación:
+- Un rol tiene muchos usuarios
+- Un tipo de vehículo puede tener muchos espacios y registros
+- Un usuario puede registrar muchas entradas (usuario_entrada_id)
+- Un usuario puede registrar muchas salidas (usuario_salida_id)
+- Un espacio tiene un registro activo (estado = 'EN_CURSO')
+- Un registro tiene un ticket
+
+
+================================================================================
+9. RUTAS API
+================================================================================
+
+ESTRUCTURA DE ENDPOINTS
+────────────────────────
+
+/api/auth/              ← Autenticación
+├── login               POST   Iniciar sesión
+├── logout              POST   Cerrar sesión
+├── register            POST   Registrar nuevo usuario
+└── session             GET    Obtener sesión actual
+
+/api/espacios/          ← Espacios
+└── (ninguna específica) GET    Listar todos los espacios
+
+/api/registros/         ← Registros
+├── (ninguna específica) GET    Listar registros
+├── entrada             POST   Registrar entrada
+└── salida              POST   Registrar salida
+
+/api/reportes/          ← Reportes
+└── (ninguna específica) GET    Obtener datos para reportes
+
+/api/tarifas/           ← Tarifas
+└── (ninguna específica) GET/POST Listar/Crear tarifas
+
+/api/tipos-vehiculo/    ← Tipos de vehículos
+└── (ninguna específica) GET    Listar tipos de vehículos
+
+/api/usuarios/          ← Usuarios
+└── (ninguna específica) GET/POST Listar/Crear usuarios
+
+
+EJEMPLOS DETALLADOS DE ENDPOINTS
+──────────────────────────────────
+
+1. POST /api/auth/login
+   └─ Entrada:
+      {
+        "email": "admin@example.com",
+        "password": "password123"
+      }
+   └─ Respuesta (éxito - 200):
+      {
+        "user": {
+          "id": 1,
+          "nombre": "Administrador",
+          "email": "admin@example.com",
+          "rol": "Administrador"
+        }
+      }
+      (+ crea cookie "session")
+   └─ Respuesta (error - 401):
+      {"error": "Credenciales invalidas"}
+
+2. POST /api/registros/entrada
+   └─ Requiere: Cookie de sesión válida
+   └─ Entrada:
+      {
+        "placa": "ABC-123",
+        "tipo_vehiculo_id": 1
+      }
+   └─ Respuesta (éxito - 200):
+      {
+        "registro": {
+          "id": 1,
+          "placa": "ABC-123",
+          "tipo_vehiculo_id": 1,
+          "espacio_id": 5,
+          "estado": "EN_CURSO",
+          "fecha_hora_entrada": "2026-02-07T14:30:45Z"
+        },
+        "espacio": {
+          "id": 5,
+          "codigo": "A-05"
+        },
+        "ticket": {
+          "id": 1,
+          "codigo_ticket": "TK-HKABC123XYZ"
+        }
+      }
+   └─ Respuesta (error - 409):
+      {"error": "No hay espacios disponibles"}
+
+3. POST /api/registros/salida
+   └─ Requiere: Cookie de sesión válida
+   └─ Entrada:
+      {
+        "registro_id": 1,
+        "descuento": 0
+      }
+   └─ Realiza:
+      ├─ Calcula tiempo estacionado
+      ├─ Calcula costo según tarifa
+      ├─ Aplica descuento si hay
+      ├─ Marca espacio como disponible
+      └─ Marca registro como finalizado
+   └─ Respuesta (éxito - 200):
+      {
+        "registro": {
+          "id": 1,
+          "placa": "ABC-123",
+          "fecha_hora_salida": "2026-02-07T16:30:45Z",
+          "minutos_totales": 120,
+          "valor_calculado": 10000,
+          "descuento": 0,
+          "valor_final": 10000,
+          "estado": "FINALIZADO"
+        }
+      }
+
+4. GET /api/espacios
+   └─ Respuesta:
+      {
+        "espacios": [
+          {
+            "id": 1,
+            "codigo": "A-01",
+            "categoria": "AUTO",
+            "disponible": true,
+            "vehiculo_placa": null
+          },
+          {
+            "id": 2,
+            "codigo": "A-02",
+            "categoria": "AUTO",
+            "disponible": false,
+            "vehiculo_placa": "ABC-123"
+          }
+        ],
+        "resumen": [
+          {
+            "categoria": "AUTO",
+            "total": 30,
+            "disponibles": 28,
+            "ocupados": 2
+          },
+          {
+            "categoria": "MOTO",
+            "total": 15,
+            "disponibles": 14,
+            "ocupados": 1
+          }
+        ]
+      }
+
+
+================================================================================
+10. INTERFAZ DE USUARIO
+================================================================================
+
+ARQUITECTURA DE PÁGINAS
+────────────────────────
+
+┌─ PÁGINAS PÚBLICAS (Sin autenticación)
+│  └─ /login
+│     └─ Formulario de inicio de sesión
+│        └─ Redirecciona a /dashboard si ya está autenticado
+
+├─ PÁGINAS PROTEGIDAS (Requieren autenticación)
+│  └─ /dashboard
+│     ├─ / (panel principal)
+│     │  └─ Información general y estadísticas
+│     ├─ /entrada
+│     │  └─ Registrar entrada de vehículos
+│     ├─ /salida
+│     │  └─ Registrar salida de vehículos
+│     ├─ /espacios
+│     │  └─ Visualizar espacios (disponibles/ocupados)
+│     ├─ /reportes (solo Administrador)
+│     │  └─ Estadísticas y gráficos
+│     ├─ /tarifas (solo Administrador)
+│     │  └─ Configurar tarifas
+│     └─ /usuarios (solo Administrador)
+│        └─ Gestionar usuarios
+
+
+DISEÑO Y UX
+────────────
+
+PALETA DE COLORES:
+- Primario: Azul (#1a6fb5)
+- Fondo: Blanco (claro) / Gris oscuro (oscuro)
+- Acentos: Verde, Rojo, Naranja para estados
+
+RESPONSIVE DESIGN:
+- Funciona en desktop, tablet y móvil
+- Usa Tailwind CSS para responsividad
+- Barra lateral adaptativa
+
+COMPONENTES DE UI USADOS:
+- Botones reutilizables (Button)
+- Tarjetas para mostrar información (Card)
+- Tablas para listados (Table)
+- Formularios con validación (Form + React Hook Form + Zod)
+- Diálogos modales (Dialog)
+- Notificaciones tipo toast (Sonner)
+- Gráficos (Recharts)
+- Selectores dropdown (Select)
+- Checkboxes y radio buttons
+
+
+VALIDACIÓN DE FORMULARIOS
+──────────────────────────
+
+Usa React Hook Form + Zod:
+
+1. Define esquema con Zod:
+   const schema = z.object({
+     placa: z.string().min(3),
+     tipo_vehiculo_id: z.number()
+   })
+
+2. Usa en formulario:
+   const form = useForm({
+     resolver: zodResolver(schema)
+   })
+
+3. Muestra errores:
+   {form.formState.errors.placa?.message}
+
+Ventajas:
+- Valida automáticamente
+- Mensajes de error personalizados
+- Previene datos inválidos en backend
+
+
+================================================================================
+11. FLUJOS PRINCIPALES DEL SISTEMA
+================================================================================
+
+FLUJO 1: REGISTRO DE ENTRADA
+─────────────────────────────
+
+┌───────────────────────┐
+│    USUARIO OPERARIO   │
+└───────┬───────────────┘
+        │
+        ▼
+┌───────────────────────────────────────────┐
+│ Va a /dashboard/entrada                  │
+└───────┬───────────────────────────────────┘
+        │
+        ▼
+┌──────────────────────────────────────────────────┐
+│ Sistema verifica sesión (getSession)            │
+│ ├─ Lee cookie "session"                         │
+│ ├─ Consulta BD para obtener datos del usuario   │
+│ └─ Si es válido, continúa; si no, redirige      │
+└───────┬──────────────────────────────────────────┘
+        │
+        ▼
+┌──────────────────────────────────────────────┐
+│ Página muestra formulario:                   │
+│ ├─ Input para placa                          │
+│ ├─ Select para tipo de vehículo              │
+│ └─ Botón "Registrar Entrada"                 │
+└───────┬────────────────────────────────────────┘
+        │
+        ▼ (Usuario ingresa datos y presiona botón)
+┌──────────────────────────────────────────────┐
+│ Frontend valida con Zod:                     │
+│ ├─ Placa debe tener mínimo 3 caracteres      │
+│ ├─ Tipo de vehículo debe ser válido          │
+│ └─ Si hay errores, muestra mensajes          │
+└───────┬────────────────────────────────────────┘
+        │
+        ▼ (Si validación es OK)
+┌──────────────────────────────────────────────┐
+│ JavaScript hace fetch POST                   │
+│ /api/registros/entrada                       │
+│ {                                            │
+│   "placa": "ABC-123",                        │
+│   "tipo_vehiculo_id": 1                      │
+│ }                                            │
+└───────┬────────────────────────────────────────┘
+        │
+        ▼
+┌──────────────────────────────────────────────────────┐
+│ BACKEND PROCESA                                      │
+│ 1. Valida sesión (verifica cookie)                  │
+│ 2. Valida datos (email y contraseña presentes)      │
+│ 3. Consulta BE:                                     │
+│    SELECT tipo_vehiculo WHERE id = tipo_vehiculo_id│
+│ 4. Obtiene categoría (AUTO o MOTO)                 │
+│ 5. Busca espacio disponible:                        │
+│    SELECT espacios WHERE categoria=? AND           │
+│            disponible=true LIMIT 1                  │
+│ 6. Si no hay espacio: retorna error 409             │
+│ 7. Si hay espacio:                                  │
+│    ├─ INSERT en tabla "registros"                  │
+│    ├─ UPDATE espacio: disponible = false           │
+│    ├─ Genera código de ticket                       │
+│    ├─ INSERT en tabla "tickets"                     │
+│    └─ Retorna JSON con datos                        │
+└───────┬──────────────────────────────────────────────┘
+        │
+        ▼
+┌───────────────────────────────────────────┐
+│ FRONTEND RECIBE RESPUESTA                 │
+│ ├─ Si éxito (200):                        │
+│ │  ├─ Muestra mensaje "Entrada registrada"│
+│ │  ├─ Muestra código de ticket            │
+│ │  ├─ Muestra espacio asignado            │
+│ │  └─ Limpia formulario                   │
+│ └─ Si error:                              │
+│    ├─ Muestra error al usuario            │
+│    └─ No limpia formulario                │
+└───────┬───────────────────────────────────┘
+        │
+        ▼
+┌─────────────────────────────────────────┐
+│ VEHÍCULO DENTRO DEL PARQUEADERO        │
+│ Registro: estado = "EN_CURSO"           │
+│ Espacio: disponible = false (ocupado)   │
+│ Ticket: generado y disponible           │
+└─────────────────────────────────────────┘
+
+
+FLUJO 2: REGISTRO DE SALIDA
+────────────────────────────
+
+┌───────────────────────┐
+│    USUARIO OPERARIO   │
+└───────┬───────────────┘
+        │
+        ▼
+┌──────────────────────────────────────────────┐
+│ Va a /dashboard/salida                       │
+└───────┬──────────────────────────────────────┘
+        │
+        ▼
+┌──────────────────────────────────────────────┐
+│ Página muestra formulario:                   │
+│ ├─ Input para código de ticket (TK-...)      │
+│ │  O                                         │
+│ ├─ Input para placa del vehículo             │
+│ ├─ Input opcional para descuento             │
+│ └─ Botón "Registrar Salida"                  │
+└───────┬──────────────────────────────────────┘
+        │
+        ▼ (Usuario ingresa datos)
+┌──────────────────────────────────────────────┐
+│ JavaScript hace fetch POST                   │
+│ /api/registros/salida                        │
+│ {                                            │
+│   "registro_id": 1,                          │
+│   "descuento": 0                             │
+│ }                                            │
+└───────┬──────────────────────────────────────┘
+        │
+        ▼
+┌──────────────────────────────────────────────────────┐
+│ BACKEND PROCESA                                      │
+│ 1. Valida sesión                                    │
+│ 2. Busca registro EN_CURSO:                         │
+│    SELECT FROM registros WHERE id=? AND             │
+│                estado='EN_CURSO'                    │
+│ 3. Si no existe: retorna error                      │
+│ 4. Si existe:                                       │
+│    ├─ fecha_salida = NOW()                         │
+│    ├─ minutos_totales = calcula diferencia         │
+│    ├─ valor_calculado = minutos * tarifa_por_minuto│
+│    ├─ valor_final = valor_calculado - descuento    │
+│    ├─ estado = "FINALIZADO"                        │
+│    ├─ UPDATE en registro                           │
+│    ├─ UPDATE espacio: disponible = true            │
+│    ├─ Retorna JSON con detalles de pago            │
+└───────┬──────────────────────────────────────────────┘
+        │
+        ▼
+┌──────────────────────────────────────────────┐
+│ FRONTEND MUESTRA                             │
+│ ├─ Resumen de registro:                      │
+│ │  ├─ Placa                                  │
+│ │  ├─ Hora entrada / Hora salida             │
+│ │  ├─ Tiempo total                           │
+│ │  ├─ Costo calculado                        │
+│ │  ├─ Descuento aplicado                     │
+│ │  └─ TOTAL A PAGAR                          │
+│ └─ Botón para imprimir o enviar ticket       │
+└───────┬───────────────────────────────────────┘
+        │
+        ▼
+┌────────────────────────────────────────────┐
+│ ESTADO FINAL:                              │
+│ ├─ Registro: estado = "FINALIZADO"        │
+│ ├─ Espacio: disponible = true (libre)     │
+│ ├─ Ticket: disponible para cliente         │
+│ └─ Ingresos actualizados en reportes       │
+└────────────────────────────────────────────┘
+
+
+FLUJO 3: VISUALIZAR ESPACIOS
+──────────────────────────────
+
+┌───────────────────────┐
+│    USUARIO (Cualquiera)│
+└───────┬───────────────┘
+        │
+        ▼
+┌──────────────────────────────────────────────┐
+│ Va a /dashboard/espacios                     │
+└───────┬──────────────────────────────────────┘
+        │
+        ▼
+┌──────────────────────────────────────────────┐
+│ Página hace fetch GET /api/espacios           │
+└───────┬──────────────────────────────────────┘
+        │
+        ▼
+┌──────────────────────────────────────────────────┐
+│ BACKEND RETORNA                                  │
+│ lista de espacios con:                           │
+│ ├─ codigo (A-01, A-02, M-01, etc)               │
+│ ├─ disponible (true/false)                       │
+│ ├─ categoria (AUTO/MOTO)                         │
+│ └─ vehiculo_placa (si está ocupado)              │
+│                                                  │
+│ + resumen por categoría:                         │
+│ ├─ total de espacios                            │
+│ ├─ espacios disponibles                         │
+│ └─ espacios ocupados                            │
+└───────┬───────────────────────────────────────────┘
+        │
+        ▼
+┌──────────────────────────────────────────────┐
+│ FRONTEND MUESTRA VISUALIZACIÓN:              │
+│ ├─ Grid de espacios                          │
+│ │  ├─ Verde si está disponible                │
+│ │  ├─ Rojo si está ocupado                    │
+│ │  └─ Muestra placa si está ocupado           │
+│ ├─ Resumen al lado                           │
+│ │  ├─ 28/30 autos disponibles                 │
+│ │  └─ 14/15 motos disponibles                 │
+│ └─ Información de ocupación                  │
+└──────────────────────────────────────────────┘
+
+
+================================================================================
+12. CONFIGURACIÓN
+================================================================================
+
+A. package.json
+────────────────
+
+Define todas las dependencias del proyecto y scripts:
+
+"scripts": {
+  "dev": "next dev",        ← Inicia servidor de desarrollo
+  "build": "next build",    ← Compila para producción
+  "start": "next start",    ← Inicia servidor en producción
+  "lint": "eslint ."        ← Analiza código
+}
+
+"dependencies": [
+  Todas las librerías que el proyecto necesita
+  Se instalan con: pnpm install
+]
+
+"devDependencies": [
+  Librerías solo para desarrollo
+  No se incluyen en la compilación final
+]
+
+
+B. tsconfig.json
+──────────────────
+
+Configura TypeScript:
+- "strict": true → Modo estricto de tipo
+- "module": "esnext" → Módulos modernos
+- "jsx": "react-jsx" → Cómo compilar JSX
+- "paths": {"@/*": ["./*"]} → Alias de importación
+
+
+C. tailwind.config.ts
+───────────────────────
+
+Configura Tailwind CSS:
+- Define colores personalización
+- Extiende utilidades
+- Configura el tema
+
+
+D. next.config.mjs
+────────────────────
+
+Configura Next.js:
+- ignoreBuildErrors: true → Ignora errores TS en build
+- images.unoptimized: true → No optimizar imágenes
+
+
+E. .env.local (no incluido en repo)
+─────────────────────────────────────
+
+Variables de entorno (privadas):
+
+DATABASE_URL=postgresql://user:password@host/dbname
+
+Nota: El archivo .env.local NO debe estar en git
+
+
+================================================================================
+13. INSTALACIÓN Y EJECUCIÓN
+================================================================================
+
+REQUISITOS PREVIOS:
+────────────────────
+
+1. Node.js 18+ instalado
+2. pnpm instalado (npm install -g pnpm)
+3. Cuenta en Neon Database (neon.tech)
+4. Base de datos PostgreSQL en Neon
+
+
+PASOS DE INSTALACIÓN:
+──────────────────────
+
+1. Descargar/Clonar el proyecto
+   git clone <repositorio>
+   cd parqueadero
+
+2. Instalar dependencias
+   pnpm install
+
+3. Crear archivo .env.local
+   DATABASE_URL=postgresql://...
+
+4. Ejecutar migrations en la base de datos
+   node scripts/run-migration.js
+
+5. Ejecutar seeds (datos iniciales)
+   node scripts/run-seed.js
+
+6. Iniciar servidor de desarrollo
+   pnpm dev
+
+7. Abrir en navegador
+   http://localhost:3000
+
+
+USO EN DESARROLLO:
+───────────────────
+
+Terminal:
+  pnpm dev
+
+Esto inicia:
+- Servidor Next.js en puerto 3000
+- Hot reload automático
+- Mensajes de error en tiempo real
+
+Cambios automáticos:
+- Al modificar archivos .tsx → Actualiza automáticamente
+- Al modificar estilos Tailwind → Compila y actualiza
+- Al modificar archivos .ts → Si hay errores, los muestra
+
+
+COMPILACIÓN PARA PRODUCCIÓN:
+─────────────────────────────
+
+1. Compilar
+   pnpm build
+
+2. Iniciar servidor de producción
+   pnpm start
+
+3. Optimizaciones:
+   - Código minificado
+   - Imágenes optimizadas
+   - Static generation donde es posible
+
+
+================================================================================
+NOTAS IMPORTANTES Y CONSIDERACIONES EDUCATIVAS
+================================================================================
+
+¿POR QUÉ NEXT.JS?
+──────────────────
+
+- Full-stack JavaScript (mismo lenguaje frontend y backend)
+- API routes integradas (sin servidor separado)
+- Server-side rendering (SEO, performance)
+- Deployment simple (Vercel, Netlify, etc)
+- Comunidad grande y documentación excelente
+
+
+¿POR QUÉ TYPESCRIPT?
+─────────────────────
+
+- Errores detectados antes de ejecutar
+- Autocompletado mejor en el editor
+- Documentación automática mediante tipos
+- Refactoring seguro
+- Mejora la calidad del código
+
+
+¿POR QUÉ TAILWIND CSS?
+────────────────────────
+
+- Versiones rápidas sin escribir CSS
+- Consistencia visual
+- Responsive design fácil
+- Archivo CSS final pequeño
+- Diseño utility-first (ágil)
+
+
+¿POR QUÉ SHADCN/UI?
+─────────────────────
+
+- Componentes accesibles (a11y)
+- Se instalan en tu proyecto (no dependencia)
+- Fáciles de personalizar
+- Basados en Radix UI
+- Apariencia profesional
+
+
+CONCEPTOS CLAVE APRENDIDOS:
+─────────────────────────────
+
+1. ARQUITECTURA MVC:
+   ├─ Model: Base de datos (PostgreSQL)
+   ├─ View: Componentes React (TSX)
+   └─ Controller: API Routes
+
+2. FLUJO DE DATOS:
+   UI → JavaScript → API → BD → JSON → UI
+
+3. AUTENTICACIÓN:
+   ├─ Sesiones con cookies
+   ├─ Protección de rutas
+   └─ Verificación de permisos
+
+4. VALIDACIÓN:
+   ├─ Frontend (Zod)
+   ├─ Backend (suposición)
+   └─ Base de datos (constraints)
+
+5. RESPONSIVIDAD:
+   ├─ Mobile-first
+   ├─ Breakpoints Tailwind
+   └─ Componentes adaptativos
+
+6. RENDIMIENTO:
+   ├─ Server-side rendering
+   ├─ Data fetching optimizado
+   └─ Caché de componentes
+
+================================================================================
+FIN DE LA DOCUMENTACIÓN
+================================================================================
+
+Este documento proporciona una guía completa del proyecto "ParkControl" para
+propósitos educativos. Cada sección puede ser expandida con ejemplos de código
+reales durante las clases.
+
+Fecha: 7 de febrero de 2026
+Versión: 1.0
